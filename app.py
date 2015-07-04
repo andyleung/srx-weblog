@@ -90,19 +90,20 @@ def login():
            ##
            ## match URL=xxx.yyy.com, and x.x.x.x()y.y.y.y()
            ##
-           match = re.search(r'(URL)=(\S+\.\S+\.\S+)',line)
-           if match:
-               url = match.group(2)
-           match = re.search(r'(\d+\.\d+\.\d+\.\d+)\S+->(\d+\.\d+\.\d+\.\d+)',line)
-           if match:
-               source = match.group(1)
-               destination = match.group(2)
-           flow = {
-               "url": url,
-               "source": source,
-               "destination": destination
-               }
-           database.websessions.insert(flow)
+           match1 = re.search(r'(URL)=(\S+\.\S+\.\S+)',line)
+           if match1:
+               url = match1.group(2)
+
+           match23 = re.search(r'(\d+\.\d+\.\d+\.\d+)\S+->(\d+\.\d+\.\d+\.\d+)',line)
+           if match23 and match1:
+               source = match23.group(1)
+               destination = match23.group(2)
+               flow = {
+                   "url": url,
+                   "source": source,
+                   "destination": destination
+                   }
+               database.websessions.insert(flow)
         dev.close()
         return redirect(url_for('get_device'))
     return render_template('login.html', error=error)
@@ -116,8 +117,13 @@ def get_device():
 def report():
    pipeline = [{"$group":{"_id":"$url","count":{"$sum":1}}},{"$sort":SON([("count",-1)])},{"$project":{"_id":0,"url":"$_id","count":1}},{"$limit":10}]  
    print "Top N URLs"
-   pp(database.websessions.aggregate(pipeline)['result'])                                   
-   data = database.websessions.aggregate(pipeline)['result']                                   
+   ### Uncomment these 2 lines for MAC
+   ### pp(database.websessions.aggregate(pipeline)['result'])                                   
+   ### data = database.websessions.aggregate(pipeline)['result']                                   
+   ###
+   ### This line work on Ubuntu
+   data = list(database.websessions.aggregate(pipeline))
+
    return render_template('report.html', 
         title = "Top 10 URLs", data=data, labels=[{'x':'count'},{'y':'url'}])                                  
 
