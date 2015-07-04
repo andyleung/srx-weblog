@@ -41,6 +41,8 @@ device = {}
 @app.route('/', methods=['GET','POST'])
 @app.route('/login', methods=['GET','POST'])
 def login():
+    # For vSRX we create a logfile 'weblog', which stores under /cf/var/log dir
+    # For branch or highend srx, the log file location can be different.
     filename = 'weblog' 
     ff = '/cf/var/log/'+filename
     error = None
@@ -72,7 +74,9 @@ def login():
         #  Print device info
         global device
         device = dev.facts
-
+ 
+        # Drop the previous db collection "websession" if exists
+        # Read the content of logfile and store in MongoDB
         database.websessions.drop()
         with SCP(dev) as scp:
              try:
@@ -84,7 +88,7 @@ def login():
         fd = open(filename,'rU')
         for line in fd:
            ##
-           ## match URL=xxx.yyy.com
+           ## match URL=xxx.yyy.com, and x.x.x.x()y.y.y.y()
            ##
            match = re.search(r'(URL)=(\S+\.\S+\.\S+)',line)
            if match:
@@ -108,10 +112,6 @@ def get_device():
     data = device
     return render_template('device.html', data=data)
 
-# 1. Retrieve the weblog file from SRX
-# 2. 
-# @app.route('/report')
-# def report():
 @app.route('/report')
 def report():
    pipeline = [{"$group":{"_id":"$url","count":{"$sum":1}}},{"$sort":SON([("count",-1)])},{"$project":{"_id":0,"url":"$_id","count":1}},{"$limit":10}]  
