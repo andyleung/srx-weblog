@@ -1,0 +1,31 @@
+{% extends "navbar.html" %}
+{% block content %}
+<head>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://dimplejs.org/dist/dimple.v2.1.2.min.js"></script>
+  <script type="text/javascript">
+    function draw(data, xlabel, ylabel){
+      var svg = dimple.newSvg("body",800,500);
+      var chart = new dimple.chart(svg, data);
+      chart.setBounds("300px","50px","50%","50%")
+      chart.ease = "elastic";
+      var myAxis = chart.addCategoryAxis("y", ylabel);
+      myAxis.fontSize = "15px"
+      chart.addMeasureAxis("x", xlabel);
+      chart.addColorAxis("count",['#B58929','#C61C6F','#268BD2','#85992C'])
+      chart.addSeries(null, dimple.plot.bar);
+      chart.draw();
+    };
+  </script>
+</head>
+
+
+<h2 class="row">{{ title }}</h2>
+<div id='chartContainer'>
+  <script type="text/javascript">
+     var labels = {{ labels|tojson|safe }};
+     var json = {{ data|tojson|safe }};
+     draw(json, labels[0]['x'],labels[1]['y'])
+  </script>
+</div>
+{% endblock %}
