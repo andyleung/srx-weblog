@@ -91,17 +91,18 @@ def login():
            ## match URL=xxx.yyy.com, and x.x.x.x()y.y.y.y()
            ##
            match1 = re.search(r'(URL)=(\S+\.\S+\.\S+)',line)
-           if match1:
-               url = match1.group(2)
-
            match23 = re.search(r'(\d+\.\d+\.\d+\.\d+)\S+->(\d+\.\d+\.\d+\.\d+)',line)
-           if match23 and match1:
+           match4 = re.search(r'(CATEGORY)=\"(\S+)\"',line)
+           if match1 and match23 and match4:
+               url = match1.group(2)
                source = match23.group(1)
                destination = match23.group(2)
+               category = match4.group(2)
                flow = {
                    "url": url,
                    "source": source,
-                   "destination": destination
+                   "destination": destination,
+                   "category": category
                    }
                database.websessions.insert(flow)
         dev.close()
@@ -113,19 +114,84 @@ def get_device():
     data = device
     return render_template('device.html', data=data)
 
-@app.route('/report')
-def report():
+@app.route('/URLs')
+def url_report():
    pipeline = [{"$group":{"_id":"$url","count":{"$sum":1}}},{"$sort":SON([("count",-1)])},{"$project":{"_id":0,"url":"$_id","count":1}},{"$limit":10}]  
    print "Top N URLs"
    ### Uncomment these 2 lines for MAC
-   ### pp(database.websessions.aggregate(pipeline)['result'])                                   
-   ### data = database.websessions.aggregate(pipeline)['result']                                   
+   ### Debug: pp(database.websessions.aggregate(pipeline)['result'])                                   
+   data = database.websessions.aggregate(pipeline)['result']                                   
    ###
-   ### This line work on Ubuntu
-   data = list(database.websessions.aggregate(pipeline))
+   ### Uncomment this line for Ubuntu
+   ###data = list(database.websessions.aggregate(pipeline))
 
    return render_template('report.html', 
         title = "Top 10 URLs", data=data, labels=[{'x':'count'},{'y':'url'}])                                  
+
+@app.route('/url_details')
+def url_details():
+   pipeline = [{"$group":{"_id":"$url","count":{"$sum":1}}},{"$sort":SON([("count",-1)])},{"$project":{"_id":0,"url":"$_id","count":1}}]  
+   print "Top N URLs"
+   ### Uncomment these 2 lines for MAC
+   ### Debug: pp(database.websessions.aggregate(pipeline)['result'])                                   
+   data = database.websessions.aggregate(pipeline)['result']                                   
+   ###
+   ### Uncomment this line for Ubuntu
+   ###data = list(database.websessions.aggregate(pipeline))
+
+   return render_template('details.html', title = "URL details", index="url", data=data) 
+
+@app.route('/Categories')
+def categories_report():
+   pipeline = [{"$group":{"_id":"$category","count":{"$sum":1}}},{"$sort":SON([("count",-1)])},{"$project":{"_id":0,"category":"$_id","count":1}},{"$limit":10}]  
+   print "Top N Categories"
+   ### Uncomment these 2 lines for MAC
+   ### pp(database.websessions.aggregate(pipeline)['result'])                                   
+   data = database.websessions.aggregate(pipeline)['result']                                   
+   ###
+   ### Uncomment this line for Ubuntu
+   ###data = list(database.websessions.aggregate(pipeline))
+
+   return render_template('report.html', 
+        title = "Top Categories", data=data, labels=[{'x':'count'},{'y':'category'}])                                  
+
+@app.route('/category_details')
+def category_details():
+   pipeline = [{"$group":{"_id":"$category","count":{"$sum":1}}},{"$sort":SON([("count",-1)])},{"$project":{"_id":0,"category":"$_id","count":1}}]  
+   print "Top N Categories"
+   ### Uncomment these 2 lines for MAC
+   ### pp(database.websessions.aggregate(pipeline)['result'])                                   
+   data = database.websessions.aggregate(pipeline)['result']                                   
+   ###
+   ### Uncomment this line for Ubuntu
+   ###data = list(database.websessions.aggregate(pipeline))
+   return render_template('details.html', title = "Category details", index='category', data=data) 
+
+@app.route('/Talkers')
+def talkers_report():
+   pipeline = [{"$group":{"_id":"$source","count":{"$sum":1}}},{"$sort":SON([("count",-1)])},{"$project":{"_id":0,"source":"$_id","count":1}},{"$limit":10}]  
+   print "Top N Talkers"
+   ### Uncomment these 2 lines for MAC
+   ### pp(database.websessions.aggregate(pipeline)['result'])                                   
+   data = database.websessions.aggregate(pipeline)['result']                                   
+   ###
+   ### Uncomment this line for Ubuntu
+   ###data = list(database.websessions.aggregate(pipeline))
+
+   return render_template('report.html', 
+        title = "Top Talkers", data=data, labels=[{'x':'count'},{'y':'source'}])                                  
+
+@app.route('/talker_details')
+def talker_details():
+   pipeline = [{"$group":{"_id":"$source","count":{"$sum":1}}},{"$sort":SON([("count",-1)])},{"$project":{"_id":0,"source":"$_id","count":1}}]  
+   print "Top N Categories"
+   ### Uncomment these 2 lines for MAC
+   ### pp(database.websessions.aggregate(pipeline)['result'])                                   
+   data = database.websessions.aggregate(pipeline)['result']                                   
+   ###
+   ### Uncomment this line for Ubuntu
+   ###data = list(database.websessions.aggregate(pipeline))
+   return render_template('details.html', title = "Talkers", index='source', data=data) 
 
 if __name__ == '__main__':
 	app.run( host='0.0.0.0', port=5000, debug=True)

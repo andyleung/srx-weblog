@@ -1,0 +1,19 @@
+{% extends "navbar.html" %}
+{% block content %}
+
+<h2 class="row">{{ title }}</h2>
+
+<!-- Generate a HTML table from a list of tuples (or list of lists, or tuple of tuples or ...) -->
+<table style="width: auto;" class="table table-bordered table-condensed table-hover table-striped">
+  <tr>
+    <th>{{ index }}</th><th>Counts</th>
+  </tr>
+{% for row in data %}
+  <tr>
+<!--   %for col in row: -->
+    <th>{{row[index]}}</th><td>{{row['count']}}</td>
+{% endfor %}
+  </tr>
+</table>
+
+{% endblock %}
